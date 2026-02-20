@@ -5,23 +5,12 @@ import { insertPrototypeSchema, AREAS, type InsertPrototype, type Prototype } fr
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { InputField } from "@/components/ui/input-field";
+import { SelectField } from "@/components/ui/select-field";
+import { DateField } from "@/components/ui/date-field";
 import { Loader2 } from "lucide-react";
+
+const areaOptions = AREAS.map((a) => ({ value: a, label: a }));
 
 interface PrototypeEditFormProps {
   prototype: Prototype;
@@ -40,6 +29,9 @@ export function PrototypeEditForm({ prototype, onSuccess }: PrototypeEditFormPro
       targetDate: prototype.targetDate,
     },
   });
+
+  const { register, handleSubmit, formState: { errors }, setValue, watch } = form;
+  const areaValue = watch("area");
 
   const updateMutation = useMutation({
     mutationFn: async (data: InsertPrototype) => {
@@ -61,88 +53,51 @@ export function PrototypeEditForm({ prototype, onSuccess }: PrototypeEditFormPro
   });
 
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit((data) => updateMutation.mutate(data))}
-        className="space-y-4"
-        data-testid="form-edit-prototype"
-      >
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input {...field} data-testid="input-edit-name" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+    <form
+      onSubmit={handleSubmit((data) => updateMutation.mutate(data))}
+      className="space-y-4"
+      data-testid="form-edit-prototype"
+    >
+      <InputField
+        label="Name"
+        error={errors.name?.message}
+        data-testid="input-edit-name"
+        {...register("name")}
+      />
 
-        <FormField
-          control={form.control}
-          name="area"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Area</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger data-testid="select-edit-area">
-                    <SelectValue />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {AREAS.map((area) => (
-                    <SelectItem key={area} value={area}>{area}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <SelectField
+        label="Area"
+        value={areaValue}
+        onValueChange={(v) => setValue("area", v as InsertPrototype["area"])}
+        options={areaOptions}
+        error={errors.area?.message}
+        data-testid="select-edit-area"
+      />
 
-        <FormField
-          control={form.control}
-          name="owner"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Owner</FormLabel>
-              <FormControl>
-                <Input {...field} data-testid="input-edit-owner" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <InputField
+        label="Owner"
+        error={errors.owner?.message}
+        data-testid="input-edit-owner"
+        {...register("owner")}
+      />
 
-        <FormField
-          control={form.control}
-          name="targetDate"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Target Date</FormLabel>
-              <FormControl>
-                <Input type="date" {...field} data-testid="input-edit-target-date" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <DateField
+        label="Target Date"
+        error={errors.targetDate?.message}
+        data-testid="input-edit-target-date"
+        {...register("targetDate")}
+      />
 
-        <div className="flex justify-end gap-2 pt-2">
-          <Button
-            type="submit"
-            disabled={updateMutation.isPending}
-            data-testid="button-submit-edit"
-          >
-            {updateMutation.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
-            Save Changes
-          </Button>
-        </div>
-      </form>
-    </Form>
+      <div className="flex justify-end gap-2 pt-2">
+        <Button
+          type="submit"
+          disabled={updateMutation.isPending}
+          data-testid="button-submit-edit"
+        >
+          {updateMutation.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+          Save Changes
+        </Button>
+      </div>
+    </form>
   );
 }

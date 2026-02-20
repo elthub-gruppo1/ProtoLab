@@ -5,29 +5,14 @@ import { insertTestCaseSchema, TEST_TYPES, type InsertTestCase } from "@shared/s
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { InputField } from "@/components/ui/input-field";
+import { SelectField } from "@/components/ui/select-field";
 import { Loader2 } from "lucide-react";
 
-const typeLabels: Record<string, string> = {
-  FUNCTIONAL: "Functional",
-  ENVIRONMENTAL: "Environmental",
-  INTEGRATION: "Integration",
-};
+const typeOptions = TEST_TYPES.map((t) => ({
+  value: t,
+  label: t.charAt(0) + t.slice(1).toLowerCase(),
+}));
 
 interface TestCaseFormProps {
   prototypeId: string;
@@ -45,6 +30,9 @@ export function TestCaseForm({ prototypeId, onSuccess }: TestCaseFormProps) {
       prototypeId,
     },
   });
+
+  const { register, handleSubmit, formState: { errors }, setValue, watch } = form;
+  const typeValue = watch("type");
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertTestCase) => {
@@ -65,66 +53,39 @@ export function TestCaseForm({ prototypeId, onSuccess }: TestCaseFormProps) {
   });
 
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit((data) => createMutation.mutate(data))}
-        className="space-y-4"
-        data-testid="form-create-test"
-      >
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Title</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="e.g. Thermal resistance at 200C"
-                  {...field}
-                  data-testid="input-test-title"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+    <form
+      onSubmit={handleSubmit((data) => createMutation.mutate(data))}
+      className="space-y-4"
+      data-testid="form-create-test"
+    >
+      <InputField
+        label="Title"
+        placeholder="e.g. Thermal resistance at 200C"
+        error={errors.title?.message}
+        data-testid="input-test-title"
+        {...register("title")}
+      />
 
-        <FormField
-          control={form.control}
-          name="type"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Type</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger data-testid="select-test-type">
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {TEST_TYPES.map((type) => (
-                    <SelectItem key={type} value={type} data-testid={`option-type-${type}`}>
-                      {typeLabels[type]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <SelectField
+        label="Type"
+        value={typeValue}
+        onValueChange={(v) => setValue("type", v as InsertTestCase["type"])}
+        options={typeOptions}
+        placeholder="Select type"
+        error={errors.type?.message}
+        data-testid="select-test-type"
+      />
 
-        <div className="flex justify-end gap-2 pt-2">
-          <Button
-            type="submit"
-            disabled={createMutation.isPending}
-            data-testid="button-submit-test"
-          >
-            {createMutation.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
-            Add Test Case
-          </Button>
-        </div>
-      </form>
-    </Form>
+      <div className="flex justify-end gap-2 pt-2">
+        <Button
+          type="submit"
+          disabled={createMutation.isPending}
+          data-testid="button-submit-test"
+        >
+          {createMutation.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+          Add Test Case
+        </Button>
+      </div>
+    </form>
   );
 }

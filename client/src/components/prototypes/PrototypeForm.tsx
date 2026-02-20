@@ -5,24 +5,12 @@ import { insertPrototypeSchema, AREAS, type InsertPrototype } from "@shared/sche
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { InputField } from "@/components/ui/input-field";
+import { SelectField } from "@/components/ui/select-field";
+import { DateField } from "@/components/ui/date-field";
 import { Loader2 } from "lucide-react";
+
+const areaOptions = AREAS.map((a) => ({ value: a, label: a }));
 
 interface PrototypeFormProps {
   onSuccess: () => void;
@@ -40,6 +28,9 @@ export function PrototypeForm({ onSuccess }: PrototypeFormProps) {
       targetDate: new Date().toISOString().split("T")[0],
     },
   });
+
+  const { register, handleSubmit, formState: { errors }, setValue, watch } = form;
+  const areaValue = watch("area");
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertPrototype) => {
@@ -60,102 +51,54 @@ export function PrototypeForm({ onSuccess }: PrototypeFormProps) {
   });
 
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit((data) => createMutation.mutate(data))}
-        className="space-y-4"
-        data-testid="form-create-prototype"
-      >
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="e.g. Thermal Shield v2"
-                  {...field}
-                  data-testid="input-prototype-name"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+    <form
+      onSubmit={handleSubmit((data) => createMutation.mutate(data))}
+      className="space-y-4"
+      data-testid="form-create-prototype"
+    >
+      <InputField
+        label="Name"
+        placeholder="e.g. Thermal Shield v2"
+        error={errors.name?.message}
+        data-testid="input-prototype-name"
+        {...register("name")}
+      />
 
-        <FormField
-          control={form.control}
-          name="area"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Area</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger data-testid="select-prototype-area">
-                    <SelectValue placeholder="Select area" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {AREAS.map((area) => (
-                    <SelectItem key={area} value={area} data-testid={`option-area-${area}`}>
-                      {area}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <SelectField
+        label="Area"
+        value={areaValue}
+        onValueChange={(v) => setValue("area", v as InsertPrototype["area"])}
+        options={areaOptions}
+        placeholder="Select area"
+        error={errors.area?.message}
+        data-testid="select-prototype-area"
+      />
 
-        <FormField
-          control={form.control}
-          name="owner"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Owner</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="e.g. Marco Rossi"
-                  {...field}
-                  data-testid="input-prototype-owner"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <InputField
+        label="Owner"
+        placeholder="e.g. Marco Rossi"
+        error={errors.owner?.message}
+        data-testid="input-prototype-owner"
+        {...register("owner")}
+      />
 
-        <FormField
-          control={form.control}
-          name="targetDate"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Target Date</FormLabel>
-              <FormControl>
-                <Input
-                  type="date"
-                  {...field}
-                  data-testid="input-prototype-target-date"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <DateField
+        label="Target Date"
+        error={errors.targetDate?.message}
+        data-testid="input-prototype-target-date"
+        {...register("targetDate")}
+      />
 
-        <div className="flex justify-end gap-2 pt-2">
-          <Button
-            type="submit"
-            disabled={createMutation.isPending}
-            data-testid="button-submit-prototype"
-          >
-            {createMutation.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
-            Create Prototype
-          </Button>
-        </div>
-      </form>
-    </Form>
+      <div className="flex justify-end gap-2 pt-2">
+        <Button
+          type="submit"
+          disabled={createMutation.isPending}
+          data-testid="button-submit-prototype"
+        >
+          {createMutation.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+          Create Prototype
+        </Button>
+      </div>
+    </form>
   );
 }
